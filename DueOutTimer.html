@@ -1,0 +1,247 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Due Out Timer</title>
+  <meta name="description" content="Due Out Timer">
+  <meta name="author" content="Joe 'Moto' Motacek">
+  <link rel="stylesheet" href="./assets/css/bootstrap.min.css">
+  <link rel="stylesheet" href="./assets/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="./assets/css/bootstrap-datetimepicker.min.css">
+  <script src="./assets/js/jquery-3.2.1.min.js" ></script>
+  <script src="./assets/js/moment.min.js" ></script>
+  <script src="./assets/js/bootstrap.min.js" ></script>
+  <script src="./assets/js/localStorage.min.js" ></script>
+  <script src="./assets/js/bootstrap-datetimepicker.min.js" ></script>
+
+</head>
+
+<body>
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="#">Due Out Timer</a>
+      </div>
+      <div id="navbar" class="navbar-collapse collapse">
+        <form class="navbar-form navbar-right">
+          <div class="form-group">
+            <input id="newTitle" type="text" placeholder="Product Title" class="form-control">
+          </div>
+          <div class="form-group">
+            <div class='input-group date' id='datetimepicker1'>
+                <input type='text' class="form-control" id="newDateTime"/>
+                <span class="input-group-addon">
+                    <span class="glyphicon glyphicon-calendar"></span>
+                </span>
+            </div>
+          </div>
+          <button id="addNew" type="button" class="btn btn-success">Add New</button>
+        </form>
+      </div><!--/.navbar-collapse -->
+    </div>
+  </nav>
+
+  <!-- Main jumbotron for a primary marketing message or call to action -->
+  <div class="jumbotron">
+    <div class="container">
+      <h1>Next Due Out: </h1>
+      <h2><span id="doTitle"></span> - <span id="doTimer"></span></h2>
+      <p><button type="button" id="complete" class="pull-right btn btn-primary btn-lg">Complete!</button></p>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-md-6">
+        <h2>Upcomming Due Outs</h2>
+        <table class="table table-striped"> 
+          <thead> 
+            <tr> 
+              <th>#</th> 
+              <th>Product Title</th> 
+              <th>Due At</th> 
+              <th>Remove</th>
+            </tr> 
+          </thead> 
+          <tbody id="dotTable">
+          </tbody> 
+        </table>
+     </div>
+     <div class="row">
+      <div class="col-md-6">
+        <h2>Finished Due Outs</h2>
+        <table class="table table-striped"> 
+          <thead> 
+            <tr> 
+              <th>#</th> 
+              <th>Product Title</th> 
+              <th>Completed</th>
+            </tr> 
+          </thead> 
+          <tbody id="dotTableFinished">
+          </tbody> 
+        </table>
+     </div>
+    </div>
+
+    <hr>
+
+    <footer>
+      <p>&copy; 2018 - By: CPT Joe Motacek - Charlie Company Commander - 173rd BEB 32nd BDE - Version 0.1</p>
+      <button type="reset" class="btn btn-danger btn-sm" onclick="clearAll()">Clear All Data</button>
+    </footer>
+  <script>
+  var countDownDate = new Date("Jan 19, 2018 15:37:25").getTime();
+  function loadList(){
+    var dots = localStorage.getItem("dots");
+    dots = JSON.parse(dots);
+    if(dots && dots.length > 0){
+      document.getElementById("doTitle").innerHTML = dots[0].title;
+      countDownDate = new Date(dots[0].dateTime).getTime();
+      $('#dotTable').empty();
+      for(var i = 0; i < dots.length; i++){
+        row = "<tr> \
+                <th scope='row'>"+i+"</th> \
+                <td>"+dots[i].title+"</td> \
+                <td>"+dots[i].dateTime+"</td> \
+                <td><button type='button' onclick='removeDot("+i+")' class='btn btn-danger btn-sm'>Remove</button></td> \
+              </tr>"
+        $("#dotTable").append(row);
+      }
+    }else{
+      document.getElementById("doTitle").innerHTML = "Today's work is due in... ";
+      countDownDate = new Date("Jan 19, 2018 15:37:25").getTime();
+      $('#dotTable').empty();
+    }
+    
+    var fdots = localStorage.getItem("fdots");
+    fdots = JSON.parse(fdots);
+    if(fdots && fdots.length > 0){
+      $('#dotTableFinished').empty();
+      for(var i = 0; i < fdots.length; i++){
+        row = "<tr> \
+                <th scope='row'>"+i+"</th> \
+                <td>"+fdots[i].title+"</td> \
+                <td>"+moment(fdots[i].dateTime).fromNow()+"</td> \
+              </tr>"
+        $("#dotTableFinished").append(row);
+      }
+    }else{
+      $('#dotTableFinished').empty();
+    }
+  }
+  loadList();
+
+  function removeDot(i){
+    //alert(i);
+    var dots = localStorage.getItem("dots");
+    dots = JSON.parse(dots);
+    dots.splice(i, 1);
+    localStorage.setItem("dots", JSON.stringify(dots));
+    loadList();
+  }
+
+  function clearAll(){
+    var usure = confirm("Are you sure you want to wipe everything out?");
+    if(usure){
+      localStorage.clear();
+      loadList();
+    }
+  }
+
+  $(function () {
+      $('#datetimepicker1').datetimepicker();
+
+      $('#addNew').click(function(){
+        if($('#newTitle').val() != "" && $('#newDateTime').val() != ""){
+          var newItem = {
+            title: $('#newTitle').val(),
+            dateTime: $('#newDateTime').val()
+          }
+          var dots = localStorage.getItem("dots");
+          dots = JSON.parse(dots);
+          if(dots){
+            dots.push(newItem);
+          }else{
+            dots = [newItem];
+          }
+          //alert(JSON.stringify(dots))
+          localStorage.setItem("dots", JSON.stringify(dots));
+          loadList();
+          $('#newTitle').val("");
+          $('#newDateTime').val("");
+        }else{
+          alert("Something's empty...")
+        }
+      });
+
+      $('#complete').click(function(){
+        var dots = localStorage.getItem("dots");
+        var fdots = localStorage.getItem("fdots");
+        dots = JSON.parse(dots);
+        fdots = JSON.parse(fdots);
+        if(dots){
+          var finished = dots.shift();
+          finished.dateTime = new Date().getTime();
+          if(fdots && fdots.length > 0){
+            fdots.unshift(finished);
+          }else{
+            fdots = [finished];
+          }
+          localStorage.setItem("fdots", JSON.stringify(fdots));
+        }
+        localStorage.setItem("dots", JSON.stringify(dots));
+        loadList();
+      });
+
+  });
+
+  // Update the count down every 1 second
+  var x = setInterval(function() {
+    // Get todays date and time
+    var now = new Date().getTime();
+    // Find the distance between now an the count down date
+    var distance = countDownDate - now;
+    // Time calculations for days, hours, minutes and seconds
+    var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+    var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+    // Display the result in the element with id="demo"
+    document.getElementById("doTimer").innerHTML = days + "d " + hours + "h "
+    + minutes + "m " + seconds + "s ";
+    // If the count down is finished, write some text 
+    if (distance < 0) {
+      //clearInterval(x);
+      var dots = localStorage.getItem("dots");
+      var fdots = localStorage.getItem("fdots");
+      dots = JSON.parse(dots);
+      fdots = JSON.parse(fdots);
+      var finished = dots.shift();
+      if(finished){
+        finished.dateTime = new Date().getTime();
+        if(fdots && fdots.length > 0){
+          fdots.unshift(finished);
+        }else{
+          fdots = [finished];
+        }
+      }
+      
+      localStorage.setItem("fdots", JSON.stringify(fdots));
+      localStorage.setItem("dots", JSON.stringify(dots));
+      loadList();
+    }
+  }, 1000);
+  </script>
+</body>
+</html>
+
+
